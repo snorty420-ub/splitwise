@@ -1,4 +1,4 @@
-package com.practice.splitwise.beans;
+package com.practice.splitwise.data;
 
 import java.io.Serializable;
 import java.util.List;

@@ -1,14 +1,14 @@
 package com.practice.splitwise.repositories;
 
-import com.practice.splitwise.beans.Expense;
-import com.practice.splitwise.beans.Person;
+import com.practice.splitwise.data.Expense;
+import com.practice.splitwise.data.Person;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
+
 
 @Repository
-public interface ExpenseRepository extends CrudRepository<Expense, UUID> {
+public interface ExpenseRepository extends CrudRepository<Expense, Long> {
     List<Expense> findByAddedBy(Person person);
 }

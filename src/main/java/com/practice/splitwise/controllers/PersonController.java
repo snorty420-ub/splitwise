@@ -1,17 +1,14 @@
 package com.practice.splitwise.controllers;
 
-import com.practice.splitwise.beans.Expense;
+import com.practice.splitwise.dtos.requests.AddFriendship;
 import com.practice.splitwise.dtos.requests.UpdatePerson;
-import com.practice.splitwise.services.ExpenseService;
 import com.practice.splitwise.services.PersonService;
-import com.practice.splitwise.beans.Person;
+import com.practice.splitwise.data.Person;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/persons")
@@ -26,27 +23,27 @@ public class PersonController {
 	}
 
 	@GetMapping("/{id}")
-	public Person getPersonById(@PathVariable("id") UUID id){
+	public Person getPersonById(@PathVariable("id") Long id){
 		return personService.getPersonById(id);
 	}
 
 	@PostMapping
-	public UUID insertPerson(@RequestBody Person person){
+	public Long insertPerson(@RequestBody Person person){
 		return personService.insertPerson(person);
 	}
 
-	@PostMapping
-	public UUID addFriend(@RequestBody UUID person1, @RequestBody UUID person2)	{
-		return personService.establishFriendship(person1, person2);
+	@PostMapping("/friend/add")
+	public Long addFriend(@RequestBody AddFriendship friendship)	{
+		return personService.establishFriendship(friendship.getPerson1(), friendship.getPerson2());
 	}
 
 	@PutMapping("/{id}")
-	public Person updatePerson(@PathVariable UUID id, @RequestBody UpdatePerson person){
+	public Person updatePerson(@PathVariable Long id, @RequestBody UpdatePerson person){
 		return personService.updatePerson(id,person);
 	}
 
 	@DeleteMapping("/{id}")
-	public void deletePerson(@PathVariable UUID id){
+	public void deletePerson(@PathVariable Long id){
 		personService.deletePerson(id);
 	}
 

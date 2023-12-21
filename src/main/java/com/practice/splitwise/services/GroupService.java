@@ -1,18 +1,16 @@
 package com.practice.splitwise.services;
 
-import com.practice.splitwise.beans.Expense;
-import com.practice.splitwise.beans.Person;
-import com.practice.splitwise.beans.Group;
+import com.practice.splitwise.data.Expense;
+import com.practice.splitwise.data.Person;
+import com.practice.splitwise.data.Group;
 import com.practice.splitwise.exceptions.GroupNotFoundException;
 import com.practice.splitwise.repositories.GroupRepository;
-import com.practice.splitwise.repositories.PersonRepository;
 import com.practice.splitwise.utilities.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
 
 @Service
 public class GroupService {
@@ -33,58 +31,58 @@ public class GroupService {
         return Utilities.IterableToList(groupRepository.findAll());
     }
 
-    public UUID createGroup(Group group) {
+    public Long createGroup(Group group) {
         return groupRepository.save(group).getId();
 
     }
 
-    public Group getGroupById(UUID id) {
+    public Group getGroupById(Long id) {
         return groupRepository.findById(id).orElseThrow(GroupNotFoundException::new);
     }
 
-    public Group updateGroup(UUID id, Group group) {
+    public Group updateGroup(Long id, Group group) {
         group.setId(id);
         return groupRepository.save(group);
     }
 
-    public void deleteGroup(UUID id) {
+    public void deleteGroup(Long id) {
         groupRepository.deleteById(id);
     }
 
-    public Group addPersonToGroup(UUID groupId, UUID personId) {
+    public Group addPersonToGroup(Long groupId, Long personId) {
         Person person = personService.getPersonById(personId);
         Group group = getGroupById(groupId);
         group.addMembers(person);
         return groupRepository.save(group);
     }
 
-    public Group removePersonFromGroup(UUID groupId, UUID personId){
+    public Group removePersonFromGroup(Long groupId, Long personId){
         Person person = personService.getPersonById(personId);
         Group group = getGroupById(groupId);
         group.removeMembers(person);
         return groupRepository.save(group);
     }
 
-    public UUID addExpense(UUID groupId, Expense expense){
+    public Long addExpense(Long groupId, Expense expense){
         Group group = getGroupById(groupId);
         group.addExpense(expense);
         Group savedGroup = groupRepository.save(group);
         return expense.getId();
     }
 
-    public List<Expense> getExpenseList(UUID groupId){
+    public List<Expense> getExpenseList(Long groupId){
         Group group = getGroupById(groupId);
         return group.getExpenseList();
     }
 
-    public Group addExpenseToGroup(UUID groupId, UUID expenseId) {
+    public Group addExpenseToGroup(Long groupId, Long expenseId) {
         Expense expense = expenseService.getExpenseById(expenseId);
         Group group = getGroupById(groupId);
         group.addExpense(expense);
         return groupRepository.save(group);
     }
 
-    public Group removeExpenseFromGroup(UUID groupId, UUID expenseId) {
+    public Group removeExpenseFromGroup(Long groupId, Long expenseId) {
         Expense expense = expenseService.getExpenseById(expenseId);
         Group group = getGroupById(groupId);
         group.removeExpense(expense);

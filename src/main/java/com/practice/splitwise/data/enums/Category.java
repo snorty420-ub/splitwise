@@ -1,4 +1,4 @@
-package com.practice.splitwise.beans.enums;
+package com.practice.splitwise.data.enums;
 
 import java.io.Serializable;
 

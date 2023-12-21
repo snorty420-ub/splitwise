@@ -1,20 +1,19 @@
-package com.practice.splitwise.beans;
+package com.practice.splitwise.data;
 
-import com.practice.splitwise.beans.enums.Category;
+import com.practice.splitwise.data.enums.Category;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Entity
 public class Expense implements Serializable {
 	@Id
-	@GeneratedValue(strategy= GenerationType.AUTO)
-	private UUID id;
+	@GeneratedValue(strategy= GenerationType.IDENTITY)
+	private Long id;
 
 	private Date date;
 	private Category category;
@@ -142,11 +141,11 @@ public class Expense implements Serializable {
 		receiptList.add(receipt);
 	}
 
-	public UUID getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(UUID id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 }

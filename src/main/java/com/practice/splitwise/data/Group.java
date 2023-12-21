@@ -1,16 +1,15 @@
-package com.practice.splitwise.beans;
+package com.practice.splitwise.data;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Entity
 @Table(name="GroupTable")
 public class Group {
 	@Id
-	@GeneratedValue(strategy= GenerationType.AUTO)
-	private UUID id;
+	@GeneratedValue(strategy= GenerationType.IDENTITY)
+	private Long id;
 
 	private String name;
 
@@ -45,11 +44,11 @@ public class Group {
 		return personList;
 	}
 
-	public UUID getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(UUID id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 
