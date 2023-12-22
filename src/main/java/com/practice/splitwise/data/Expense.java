@@ -1,151 +1,62 @@
 package com.practice.splitwise.data;
 
 import com.practice.splitwise.data.enums.Category;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
 public class Expense implements Serializable {
 	@Id
 	@GeneratedValue(strategy= GenerationType.IDENTITY)
 	private Long id;
-
-	private Date date;
+	private Long addedBy;
+	private Timestamp date;
 	private Category category;
-	private boolean isUpdated = false;
 	private Amount amount;
 
-	@OneToOne(targetEntity = Person.class)
-	private Person addedBy;
-
-	@OneToMany(targetEntity=Expense.class)
-	private List<Expense> subExpenseList;
-
-	@OneToMany(targetEntity=Receipt.class)
-	private List<Receipt> receiptList;
-
-	@OneToMany(targetEntity=Spender.class)
-	private List<Spender> spenderList;
-
-	@OneToMany(targetEntity=Spender.class)
-	private List<Spender> beneficiaryList;
-
-	public  Expense (Date date, Person addedBy, Category category, Expense... subExpenseList){
-		this(date,addedBy,category, Arrays.asList(subExpenseList));
-	}
-
-	public  Expense (Person addedBy, Category category, Expense... subExpenseList){
-		this(new Date(),addedBy,category, Arrays.asList(subExpenseList));
-	}
-
-	public Expense(){}
-
-	public Expense (Date date, Person addedBy, Category category, List<Expense> subExpenseList){
-		this.date = date;
-		this.addedBy = addedBy;
-		this.category = category;
-		this.subExpenseList = subExpenseList;
-		updateMembers();
-	}
-
-	private void updateMembers() {
-		if(isUpdated){
-			return;
-		}
-		isUpdated = true;
-		for (Expense expense : subExpenseList) {
-			amount.add(expense.getAmount());
-			spenderList.addAll(expense.getSpenderList());
-			beneficiaryList.addAll(expense.getBeneficiaryList());
-		}
-		spenderList = removeDuplicates(spenderList);
-		removeDuplicates(beneficiaryList);
-	}
-
-	private <T> List<T> removeDuplicates(List<T> list) {
-		return list.stream().distinct().collect(Collectors.toList());
-	}
 
 
 
-	public Date getDate() {
-		return date;
-	}
+//	@OneToMany(targetEntity=Expense.class)
+//	private List<Expense> subExpenseList;
+//
+//	@OneToMany(targetEntity=Receipt.class)
+//	private List<Receipt> receiptList;
+//
+//	@OneToMany(targetEntity=Spender.class)
+//	private List<Spender> spenderList;
+//
+//	@OneToMany(targetEntity=Spender.class)
+//	private List<Spender> beneficiaryList;
+//	private void updateMembers() {
+//		if(isUpdated){
+//			return;
+//		}
+//		isUpdated = true;
+//		for (Expense expense : subExpenseList) {
+//			amount.add(expense.getAmount());
+//			spenderList.addAll(expense.getSpenderList());
+//			beneficiaryList.addAll(expense.getBeneficiaryList());
+//		}
+//		spenderList = removeDuplicates(spenderList);
+//		removeDuplicates(beneficiaryList);
+//	}
 
-	public void setDate(Date date) {
-		this.date = date;
-	}
-
-	public Amount getAmount() {
-		return amount;
-	}
-
-	public void setAmount(Amount amount) {
-		this.amount = amount;
-	}
-
-	public List<Spender> getSpenderList() {
-		return spenderList;
-	}
-
-	public void setSpenderList(List<Spender> spenderList) {
-		this.spenderList = spenderList;
-	}
-
-	public List<Spender> getBeneficiaryList() {
-		return beneficiaryList;
-	}
-
-	public void setBeneficiaryList(List<Spender> beneficiaryList) {
-		this.beneficiaryList = beneficiaryList;
-	}
-
-	public List<Expense> getSubExpenseList() {
-		return subExpenseList;
-	}
-
-	public void setSubExpenseList(List<Expense> subExpenseList) {
-		this.subExpenseList = subExpenseList;
-	}
-
-	public Person getAddedBy() {
-		return addedBy;
-	}
-
-	public void setAddedBy(Person addedBy) {
-		this.addedBy = addedBy;
-	}
-
-	public Category getCategory() {
-		return category;
-	}
-
-	public void setCategory(Category category) {
-		this.category = category;
-	}
-
-	public List<Receipt> getReceiptList() {
-		return receiptList;
-	}
-
-	public void setReceiptList(List<Receipt> receiptList) {
-		this.receiptList = receiptList;
-	}
-
-	public void addReceipt(Receipt receipt){
-		receiptList.add(receipt);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
+//	private <T> List<T> removeDuplicates(List<T> list) {
+//		return list.stream().distinct().collect(Collectors.toList());
+//	}
 }

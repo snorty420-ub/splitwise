@@ -1,15 +1,20 @@
 package com.practice.splitwise.services;
 
-import com.practice.splitwise.data.Expense;
-import com.practice.splitwise.data.Group;
-import com.practice.splitwise.data.Person;
+import com.practice.splitwise.data.*;
+import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.exceptions.ExpenseNotFoundException;
 import com.practice.splitwise.repositories.ExpenseRepository;
 import com.practice.splitwise.utilities.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -53,7 +58,7 @@ public class ExpenseService {
 
     public Expense getExpenseByIdForPerson(Long personId, Long expenseId) {
         Expense expense = getExpenseById(expenseId);
-        if(expense.getAddedBy().getId() != personId)
+        if(expense.getAddedBy().longValue() != personId)
             throw new ExpenseNotFoundException();
         return expense;
     }
@@ -74,7 +79,7 @@ public class ExpenseService {
 
     private Expense insertExpenseForPersonGetObject(Long personId, Expense expense) {
         Person person = personService.getPersonById(personId);
-        expense.setAddedBy(person);
+        expense.setAddedBy(person.getId());
         return expenseRepository.save(expense);
     }
 
@@ -84,4 +89,35 @@ public class ExpenseService {
         group.addExpense(expenseWithAddedBy);
         return expenseWithAddedBy.getId();
     }
+
+    public Long insertExpenseForPerson(InsertExpenseDTO insertExpenseDTO) {
+        // create and save expense object
+        Long expenseID = createExpense(insertExpenseDTO);
+        // calculation of splits
+        Map<Pair<Long,Long>,Integer> amountSplitMap = calculateShares(insertExpenseDTO);
+        // create and save spender and beneficiary
+        // update friendship
+        //
+        return expenseID;
+    }
+
+    private Map<Pair<Long, Long>, Integer> calculateShares(InsertExpenseDTO insertExpenseDTO) {
+        Map<Pair<Long, Long>, Integer> amountSplitMap = new HashMap<>();
+        List<Spender> spenderList = insertExpenseDTO.getSpenderList();
+        List<Spender> beneficiaryList = insertExpenseDTO.getBeneficiaryList();
+        double amount = insertExpenseDTO.getAmount().getAmount();
+        double rough = amount/spenderList.size();
+
+        return amountSplitMap;
+    }
+
+    private Long createExpense(InsertExpenseDTO insertExpenseDTO) {
+        return expenseRepository.save(Expense.builder()
+                .addedBy(insertExpenseDTO.getAddedByPersonId())
+                .date(Timestamp.valueOf(LocalDateTime.now()))
+                .category(insertExpenseDTO.getCategory())
+                .amount(insertExpenseDTO.getAmount())
+                .build()).getId();
+    }
+
 }

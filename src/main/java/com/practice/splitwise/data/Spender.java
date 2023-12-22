@@ -1,29 +1,19 @@
 package com.practice.splitwise.data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import lombok.Data;
+
+import javax.persistence.*;
 import java.io.Serializable;
 @Entity
+@Data
+@Table
 public class Spender implements Serializable {
 	@Id
-//	@GeneratedValue(strategy = GenerationType.AUTO)
-
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	private Long expenseId;
 	private Person person;
 	private double amount;
+	private boolean isSpender;
 
-	public Person getPerson() {
-		return person;
-	}
-
-	public void setPerson(Person person) {
-		this.person = person;
-	}
-
-	public double getAmount() {
-		return amount;
-	}
-
-	public void setAmount(double amount) {
-		this.amount = amount;
-	}
 }

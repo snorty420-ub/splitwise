@@ -1,6 +1,7 @@
 package com.practice.splitwise.controllers;
 
 import com.practice.splitwise.data.Expense;
+import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.services.ExpenseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +25,8 @@ public class ExpenseController {
     }
 
     @PostMapping
-    public Long insertExpense(@RequestHeader Long personId, @RequestBody Expense expense){
-        return expenseService.insertExpenseForPerson(personId, expense);
+    public Long insertExpense(@RequestBody InsertExpenseDTO insertExpenseDTO){
+        return expenseService.insertExpenseForPerson(insertExpenseDTO);
     }
 
     @PostMapping("/group/{groupId}")
