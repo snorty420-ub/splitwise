@@ -11,7 +11,6 @@ import com.practice.splitwise.repositories.FriendshipRepository;
 import com.practice.splitwise.repositories.SpenderRepository;
 import com.practice.splitwise.utilities.Utilities;
 import java.util.Currency;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -25,16 +24,19 @@ import java.util.Map;
 @Service
 public class ExpenseService {
 
-    private ExpenseRepository expenseRepository;
-    private PersonService personService;
-    private GroupService groupService;
-    private SpenderRepository spenderRepository;
-    private FriendshipRepository friendshipRepository;
+    private final ExpenseRepository expenseRepository;
+    private final PersonService personService;
+    private final GroupService groupService;
+    private final SpenderRepository spenderRepository;
+    private final FriendshipRepository friendshipRepository;
 
-    @Autowired
-    public ExpenseService(ExpenseRepository expenseRepository, PersonService personService){
+    public ExpenseService(ExpenseRepository expenseRepository, PersonService personService, GroupService groupService,
+            SpenderRepository spenderRepository, FriendshipRepository friendshipRepository){
         this.expenseRepository = expenseRepository;
         this.personService = personService;
+        this.groupService = groupService;
+        this.spenderRepository = spenderRepository;
+        this.friendshipRepository = friendshipRepository;
     }
 
     public Expense getExpenseById(Long expenseId) {
