@@ -22,6 +22,6 @@ public class Friendship implements Serializable {
         private Long id;
         private Long self;
         private Long friend;
-        private double amount;
+        private String amount;
 
 }

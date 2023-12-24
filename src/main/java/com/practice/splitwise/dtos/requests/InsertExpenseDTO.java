@@ -14,8 +14,9 @@ public class InsertExpenseDTO implements Serializable {
     private Long addedByPersonId;
     private Category category;
     private Amount amount;
-    private List<Spender> spenderList;
-    private List<Spender> beneficiaryList;
+    private List<Long> spenderList;
+    private List<Long> beneficiaryList;
+
 
 
 //    private Expense expense;

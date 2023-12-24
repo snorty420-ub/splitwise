@@ -1,6 +1,8 @@
 package com.practice.splitwise.utilities;
 
+import com.practice.splitwise.data.Amount;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
 public class Utilities {
@@ -8,6 +10,15 @@ public class Utilities {
 		List<T> list = new ArrayList<>();
 		iterable.forEach(list::add);
 		return list;
+	}
+
+	public static String mapAmountToString(double value, Currency currency) {
+		return currency.toString() + " " + value;
+	}
+
+	public static Amount mapStringToAmount(String currencyString) {
+		Currency currency = Currency.getInstance(currencyString.split(" ")[0]);
+		return Amount.builder().currency(currency).value(Double.parseDouble(currencyString.split(" ")[1])).build();
 	}
 
 	public static void printError(String s) {

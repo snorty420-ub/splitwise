@@ -11,7 +11,7 @@ public class SubExpense implements Serializable {
 
 
 	public double getAmountValue() {
-		return amount.getAmount();
+		return amount.getValue();
 	}
 
 

@@ -1,5 +1,7 @@
 package com.practice.splitwise.services;
 
+import static com.practice.splitwise.utilities.Utilities.mapAmountToString;
+
 import com.practice.splitwise.data.Friendship;
 import com.practice.splitwise.data.Person;
 import com.practice.splitwise.dtos.requests.UpdatePerson;
@@ -7,6 +9,7 @@ import com.practice.splitwise.exceptions.PersonNotFoundException;
 import com.practice.splitwise.repositories.FriendshipRepository;
 import com.practice.splitwise.repositories.PersonRepository;
 import com.practice.splitwise.utilities.Utilities;
+import java.util.Currency;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -61,7 +64,7 @@ public class PersonService {
 		if(!person1Optional.isPresent() || !person2Optional.isPresent()){
 			throw new PersonNotFoundException();
 		}
-        Friendship save = friendshipRepository.save(Friendship.builder().self(person1).friend(person2).amount(0).build());
+        Friendship save = friendshipRepository.save(Friendship.builder().self(person1).friend(person2).amount(mapAmountToString(0, Currency.getInstance("INR"))).build());
 //        friendshipRepository.save(Friendship.builder().self(person2).friend(person1).amount(0).build())
 		// we have to handle a case if the friendship already exists
 		// we have to handle a case if one addition failed but another succeeded

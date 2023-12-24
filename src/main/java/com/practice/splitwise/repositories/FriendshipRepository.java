@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
+    Friendship getFriendshipByPersonIdAndFriendId(Long first, Long second);
 }

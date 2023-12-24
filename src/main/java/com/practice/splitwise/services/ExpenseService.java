@@ -1,16 +1,21 @@
 package com.practice.splitwise.services;
 
+import static com.practice.splitwise.utilities.Utilities.mapAmountToString;
+import static com.practice.splitwise.utilities.Utilities.mapStringToAmount;
+
 import com.practice.splitwise.data.*;
 import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.exceptions.ExpenseNotFoundException;
 import com.practice.splitwise.repositories.ExpenseRepository;
+import com.practice.splitwise.repositories.FriendshipRepository;
+import com.practice.splitwise.repositories.SpenderRepository;
 import com.practice.splitwise.utilities.Utilities;
+import java.util.Currency;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +28,8 @@ public class ExpenseService {
     private ExpenseRepository expenseRepository;
     private PersonService personService;
     private GroupService groupService;
+    private SpenderRepository spenderRepository;
+    private FriendshipRepository friendshipRepository;
 
     @Autowired
     public ExpenseService(ExpenseRepository expenseRepository, PersonService personService){
@@ -94,19 +101,52 @@ public class ExpenseService {
         // create and save expense object
         Long expenseID = createExpense(insertExpenseDTO);
         // calculation of splits
-        Map<Pair<Long,Long>,Integer> amountSplitMap = calculateShares(insertExpenseDTO);
+        Map<Pair<Long,Long>,Double> amountSplitMap = calculateShares(insertExpenseDTO);
         // create and save spender and beneficiary
+        createSpenderAndBeneficiary(insertExpenseDTO, expenseID, amountSplitMap);
         // update friendship
-        //
+        updateFriendship(insertExpenseDTO.getAmount().getCurrency(), amountSplitMap);
         return expenseID;
     }
 
-    private Map<Pair<Long, Long>, Integer> calculateShares(InsertExpenseDTO insertExpenseDTO) {
-        Map<Pair<Long, Long>, Integer> amountSplitMap = new HashMap<>();
-        List<Spender> spenderList = insertExpenseDTO.getSpenderList();
-        List<Spender> beneficiaryList = insertExpenseDTO.getBeneficiaryList();
-        double amount = insertExpenseDTO.getAmount().getAmount();
-        double rough = amount/spenderList.size();
+    private void updateFriendship(Currency currency, Map<Pair<Long, Long>, Double> amountSplitMap) {
+        for (Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
+            Friendship friendship = friendshipRepository.getFriendshipByPersonIdAndFriendId(entry.getKey().getFirst(), entry.getKey().getSecond());
+            friendship.setAmount(mapAmountToString(mapStringToAmount(friendship.getAmount()).getValue() + entry.getValue(),currency));
+            friendshipRepository.save(friendship);
+        }
+    }
+
+    private void createSpenderAndBeneficiary(InsertExpenseDTO insertExpenseDTO, Long expenseID, Map<Pair<Long, Long>, Double> amountSplitMap) {
+        for(Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
+            Spender spender = Spender.builder()
+                    .expenseId(expenseID)
+                    .fromUserId(entry.getKey().getFirst())
+                    .toUserId(entry.getKey().getSecond())
+                    .amount(mapAmountToString(entry.getValue(), insertExpenseDTO.getAmount().getCurrency()))
+                    .isSpender(true)
+                    .build();
+            spenderRepository.save(spender);
+        }
+    }
+
+
+
+
+    private Map<Pair<Long, Long>, Double> calculateShares(InsertExpenseDTO insertExpenseDTO) {
+        Map<Pair<Long, Long>, Double> amountSplitMap = new HashMap<>();
+        List<Long> spenderList = insertExpenseDTO.getSpenderList();
+        List<Long> beneficiaryList = insertExpenseDTO.getBeneficiaryList();
+        double amount = insertExpenseDTO.getAmount().getValue();
+        double rough = amount/(spenderList.size()*beneficiaryList.size()); // handle jhol
+        for(Long spender: spenderList){
+            for(Long beneficiary: beneficiaryList){
+                if (!spenderList.contains(beneficiary)) {
+                    amountSplitMap.put(Pair.of(spender,beneficiary),rough);
+                }
+                amountSplitMap.put(Pair.of(spender,beneficiary),rough);
+            }
+        }
 
         return amountSplitMap;
     }
