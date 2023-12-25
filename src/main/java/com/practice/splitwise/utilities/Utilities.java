@@ -20,6 +20,10 @@ public class Utilities {
 		Currency currency = Currency.getInstance(currencyString.split(" ")[0]);
 		return Amount.builder().currency(currency).value(Double.parseDouble(currencyString.split(" ")[1])).build();
 	}
+	public static double getPortionInDouble(double value) {
+		double scale = Math.pow(10, 3);
+		return Math.round(value * scale) / scale;
+	}
 
 	public static void printError(String s) {
 		System.err.println("[ERROR]: " + s);

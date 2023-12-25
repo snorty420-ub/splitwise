@@ -64,10 +64,10 @@ public class GroupService {
     }
 
     public Long addExpense(Long groupId, Expense expense){
-        Group group = getGroupById(groupId);
-        group.addExpense(expense);
-        Group savedGroup = groupRepository.save(group);
-        return expense.getId();
+//        Group group = getGroupById(groupId);
+//        group.addExpense(expense);
+//        Group savedGroup = groupRepository.save(group);
+        return 1L;
     }
 
     public List<Expense> getExpenseList(Long groupId){
@@ -76,10 +76,10 @@ public class GroupService {
     }
 
     public Group addExpenseToGroup(Long groupId, Long expenseId) {
-        Expense expense = expenseService.getExpenseById(expenseId);
-        Group group = getGroupById(groupId);
-        group.addExpense(expense);
-        return groupRepository.save(group);
+//        Expense expense = expenseService.getExpenseById(expenseId);
+//        Group group = getGroupById(groupId);
+//        group.addExpense(expense);
+        return new Group();
     }
 
     public Group removeExpenseFromGroup(Long groupId, Long expenseId) {

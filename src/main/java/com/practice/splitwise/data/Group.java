@@ -1,10 +1,19 @@
 package com.practice.splitwise.data;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@Builder
 @Table(name="GroupTable")
 public class Group {
 	@Id
@@ -17,45 +26,15 @@ public class Group {
 	private List<Expense> expenseList;
 	@OneToMany
 	private List<Person> personList;
-
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void addExpense(Expense expense) {
-		expenseList.add(expense);
-	}
-
-	public List<Expense> getExpenseList() {
-		return expenseList;
-	}
-
 	public void mergeGroup(Group group) {
-		expenseList.addAll(group.getExpenseList());
-		personList.addAll(group.getMembers());
-	}
-
-	public List<Person> getMembers() {
-		return personList;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
+//		expenseList.addAll(group.getExpenseList());
+//		personList.addAll(group.getMembers());
 	}
 
 	public void removeMembers(Person person) {
-		personList = personList.parallelStream()
-				.filter(personOfList-> personOfList.getId() != person.getId())
-				.collect(Collectors.toList());
+//		personList = personList.parallelStream()
+//				.filter(personOfList-> personOfList.getId() != person.getId())
+//				.collect(Collectors.toList());
 	}
 
 	public void addMembers(Person person) {

@@ -1,8 +1,5 @@
 package com.practice.splitwise.services;
 
-import static com.practice.splitwise.utilities.Utilities.mapAmountToString;
-import static com.practice.splitwise.utilities.Utilities.mapStringToAmount;
-
 import com.practice.splitwise.data.*;
 import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.exceptions.ExpenseNotFoundException;
@@ -20,21 +17,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.practice.splitwise.utilities.Utilities.*;
+
 
 @Service
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
     private final PersonService personService;
-    private final GroupService groupService;
+//    private final GroupService groupService;
     private final SpenderRepository spenderRepository;
     private final FriendshipRepository friendshipRepository;
 
-    public ExpenseService(ExpenseRepository expenseRepository, PersonService personService, GroupService groupService,
+    public ExpenseService(ExpenseRepository expenseRepository, PersonService personService,
             SpenderRepository spenderRepository, FriendshipRepository friendshipRepository){
         this.expenseRepository = expenseRepository;
         this.personService = personService;
-        this.groupService = groupService;
+//        this.groupService = groupService;
         this.spenderRepository = spenderRepository;
         this.friendshipRepository = friendshipRepository;
     }
@@ -93,13 +92,14 @@ public class ExpenseService {
     }
 
     public Long insertExpenseForPerson(Long personId, Long groupId, Expense expense) {
-        Group group = groupService.getGroupById(groupId);
+        Group group = new Group();
         Expense expenseWithAddedBy = insertExpenseForPersonGetObject(personId, expense);
-        group.addExpense(expenseWithAddedBy);
+//        group.addExpense(expenseWithAddedBy);
         return expenseWithAddedBy.getId();
     }
 
     public Long insertExpenseForPerson(InsertExpenseDTO insertExpenseDTO) {
+        // unequal division
         // create and save expense object
         Long expenseID = createExpense(insertExpenseDTO);
         // calculation of splits
@@ -113,7 +113,7 @@ public class ExpenseService {
 
     private void updateFriendship(Currency currency, Map<Pair<Long, Long>, Double> amountSplitMap) {
         for (Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
-            Friendship friendship = friendshipRepository.getFriendshipByPersonIdAndFriendId(entry.getKey().getFirst(), entry.getKey().getSecond());
+            Friendship friendship = friendshipRepository.getFriendshipBySelfAndFriend(entry.getKey().getFirst(), entry.getKey().getSecond());
             friendship.setAmount(mapAmountToString(mapStringToAmount(friendship.getAmount()).getValue() + entry.getValue(),currency));
             friendshipRepository.save(friendship);
         }
@@ -140,13 +140,13 @@ public class ExpenseService {
         List<Long> spenderList = insertExpenseDTO.getSpenderList();
         List<Long> beneficiaryList = insertExpenseDTO.getBeneficiaryList();
         double amount = insertExpenseDTO.getAmount().getValue();
-        double rough = amount/(spenderList.size()*beneficiaryList.size()); // handle jhol
+        double rough = amount/(spenderList.size()*beneficiaryList.size()); //jhol : (solved) extra amount borne by spenders
+
         for(Long spender: spenderList){
             for(Long beneficiary: beneficiaryList){
                 if (!spenderList.contains(beneficiary)) {
-                    amountSplitMap.put(Pair.of(spender,beneficiary),rough);
+                    amountSplitMap.put(Pair.of(spender,beneficiary),getPortionInDouble(rough));
                 }
-                amountSplitMap.put(Pair.of(spender,beneficiary),rough);
             }
         }
 
