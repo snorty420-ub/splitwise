@@ -21,29 +21,24 @@ public class Group {
 	private Long id;
 
 	private String name;
+//	public void mergeGroup(Group group) {
+////		expenseList.addAll(group.getExpenseList());
+////		personList.addAll(group.getMembers());
+//	}
 
-	@OneToMany
-	private List<Expense> expenseList;
-	@OneToMany
-	private List<Person> personList;
-	public void mergeGroup(Group group) {
-//		expenseList.addAll(group.getExpenseList());
-//		personList.addAll(group.getMembers());
-	}
-
-	public void removeMembers(Person person) {
+//	public void removeMembers(Person person) {
 //		personList = personList.parallelStream()
 //				.filter(personOfList-> personOfList.getId() != person.getId())
 //				.collect(Collectors.toList());
-	}
+//	}
 
-	public void addMembers(Person person) {
-		personList.add(person);
-	}
-
-	public void removeExpense(Expense expense) {
-		expenseList = expenseList.parallelStream()
-				.filter(expenseOfList-> expenseOfList.getId() != expense.getId())
-				.collect(Collectors.toList());
-	}
+//	public void addMembers(Person person) {
+//		personList.add(person);
+//	}
+//
+//	public void removeExpense(Expense expense) {
+//		expenseList = expenseList.parallelStream()
+//				.filter(expenseOfList-> expenseOfList.getId() != expense.getId())
+//				.collect(Collectors.toList());
+//	}
 }

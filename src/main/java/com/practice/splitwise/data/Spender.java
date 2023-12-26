@@ -13,10 +13,10 @@ public class Spender implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	private Long groupId;
 	private Long expenseId;
 	private Long fromUserId;
 	private Long toUserId;
 	private String amount;
-	private boolean isSpender;
 
 }

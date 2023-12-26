@@ -1,6 +1,7 @@
 package com.practice.splitwise.controllers;
 
 import com.practice.splitwise.data.Group;
+import com.practice.splitwise.dtos.requests.CreateGroupDTO;
 import com.practice.splitwise.services.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +26,9 @@ public class GroupController {
     }
 
     @PostMapping
-    public Long createGroup(@RequestBody Group person){
-        return groupService.createGroup(person);
+    public Long createGroup(@RequestBody CreateGroupDTO createGroupDTO){
+
+        return groupService.createGroup(createGroupDTO);
     }
 
     @PutMapping("/{id}")

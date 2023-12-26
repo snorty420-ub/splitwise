@@ -7,15 +7,14 @@ import com.practice.splitwise.repositories.ExpenseRepository;
 import com.practice.splitwise.repositories.FriendshipRepository;
 import com.practice.splitwise.repositories.SpenderRepository;
 import com.practice.splitwise.utilities.Utilities;
-import java.util.Currency;
+
+import java.util.*;
+
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static com.practice.splitwise.utilities.Utilities.*;
 
@@ -113,7 +112,12 @@ public class ExpenseService {
 
     private void updateFriendship(Currency currency, Map<Pair<Long, Long>, Double> amountSplitMap) {
         for (Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
-            Friendship friendship = friendshipRepository.getFriendshipBySelfAndFriend(entry.getKey().getFirst(), entry.getKey().getSecond());
+            Optional<Friendship> friendshipOp = friendshipRepository.getFriendshipBySelfAndFriend(entry.getKey().getFirst(), entry.getKey().getSecond());
+            if(!friendshipOp.isPresent()){
+                //TODO:exception
+                return;
+            }
+            Friendship friendship = friendshipOp.get();
             friendship.setAmount(mapAmountToString(mapStringToAmount(friendship.getAmount()).getValue() + entry.getValue(),currency));
             friendshipRepository.save(friendship);
         }
@@ -126,7 +130,6 @@ public class ExpenseService {
                     .fromUserId(entry.getKey().getFirst())
                     .toUserId(entry.getKey().getSecond())
                     .amount(mapAmountToString(entry.getValue(), insertExpenseDTO.getAmount().getCurrency()))
-                    .isSpender(true)
                     .build();
             spenderRepository.save(spender);
         }

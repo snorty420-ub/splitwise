@@ -23,6 +23,7 @@ public class Expense implements Serializable {
 	@Id
 	@GeneratedValue(strategy= GenerationType.IDENTITY)
 	private Long id;
+	private Long groupId;
 	private Long addedBy;
 	private Timestamp date;
 	private Category category;
