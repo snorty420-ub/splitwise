@@ -12,12 +12,9 @@ import java.util.List;
 @Data
 public class InsertExpenseDTO implements Serializable {
     private Long addedByPersonId;
+    private Long groupId;
     private Category category;
     private Amount amount;
     private List<Long> spenderList;
     private List<Long> beneficiaryList;
-
-
-
-//    private Expense expense;
 }

@@ -30,8 +30,8 @@ public class ExpenseController {
     }
 
     @PostMapping("/group/{groupId}")
-    public Long insertExpenseToGroup(@RequestHeader Long personId, @PathVariable Long groupId, @RequestBody Expense expense){
-        return expenseService.insertExpenseForPerson(personId, groupId,  expense);
+    public Long insertExpenseToGroup(@RequestBody InsertExpenseDTO insertExpenseDTO){
+        return expenseService.insertExpenseForPerson(insertExpenseDTO);
     }
 
     @PutMapping("/{expenseId}")

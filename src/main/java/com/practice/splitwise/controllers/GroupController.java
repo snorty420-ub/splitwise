@@ -2,6 +2,7 @@ package com.practice.splitwise.controllers;
 
 import com.practice.splitwise.data.Group;
 import com.practice.splitwise.dtos.requests.CreateGroupDTO;
+import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.services.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -52,8 +53,8 @@ public class GroupController {
     }
 
     @PostMapping("/{groupId}/expenses/{expenseId}/add")
-    public Group addExpenseToGroup(@PathVariable Long groupId, @PathVariable Long expenseId){
-        return groupService.addExpenseToGroup(groupId, expenseId);
+    public Group addExpenseToGroup(InsertExpenseDTO insertExpenseDTO){
+        return groupService.addExpenseToGroup(insertExpenseDTO);
     }
 
     @PostMapping("/{groupId}/expenses/{expenseId}/remove")

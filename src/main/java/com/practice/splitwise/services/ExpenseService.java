@@ -5,6 +5,7 @@ import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.exceptions.ExpenseNotFoundException;
 import com.practice.splitwise.repositories.ExpenseRepository;
 import com.practice.splitwise.repositories.FriendshipRepository;
+import com.practice.splitwise.repositories.GroupParticipantsRepository;
 import com.practice.splitwise.repositories.SpenderRepository;
 import com.practice.splitwise.utilities.Utilities;
 
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.practice.splitwise.utilities.Utilities.*;
 
@@ -24,14 +27,16 @@ public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
     private final PersonService personService;
+    private final GroupParticipantsRepository groupParticipantsRepository;
 //    private final GroupService groupService;
     private final SpenderRepository spenderRepository;
     private final FriendshipRepository friendshipRepository;
 
     public ExpenseService(ExpenseRepository expenseRepository, PersonService personService,
-            SpenderRepository spenderRepository, FriendshipRepository friendshipRepository){
+                          GroupParticipantsRepository groupParticipantsRepository, SpenderRepository spenderRepository, FriendshipRepository friendshipRepository){
         this.expenseRepository = expenseRepository;
         this.personService = personService;
+        this.groupParticipantsRepository = groupParticipantsRepository;
 //        this.groupService = groupService;
         this.spenderRepository = spenderRepository;
         this.friendshipRepository = friendshipRepository;
@@ -70,7 +75,7 @@ public class ExpenseService {
         return expense;
     }
 
-    public Long insertExpenseForPerson(Long personId, Expense expense) {
+    public Long insertExpenseToGroup(Long personId, Expense expense) {
         return insertExpenseForPersonGetObject(personId, expense).getId();
     }
 
@@ -106,8 +111,49 @@ public class ExpenseService {
         // create and save spender and beneficiary
         createSpenderAndBeneficiary(insertExpenseDTO, expenseID, amountSplitMap);
         // update friendship
-        updateFriendship(insertExpenseDTO.getAmount().getCurrency(), amountSplitMap);
+        if(Objects.nonNull(insertExpenseDTO.getGroupId())){
+            updateFriendshipForGroup(insertExpenseDTO,amountSplitMap);
+        }
+        else updateFriendship(insertExpenseDTO.getAmount().getCurrency(), amountSplitMap);
         return expenseID;
+    }
+
+    private void updateFriendshipForGroup(InsertExpenseDTO insertExpenseDTO, Map<Pair<Long, Long>, Double> amountSplitMap) {
+        Currency currency = insertExpenseDTO.getAmount().getCurrency();
+        Optional<List<Long>> groupParticipantsOp = groupParticipantsRepository.findByGroupId(insertExpenseDTO.getGroupId());
+        if(!groupParticipantsOp.isPresent()){
+            //:TODO
+            return;
+        }
+        List<Long> groupParticipants = groupParticipantsOp.get();
+        Set<Long> mergedUniqueList = Stream.concat(insertExpenseDTO.getSpenderList().stream(), insertExpenseDTO.getBeneficiaryList().stream())
+                .collect(Collectors.toSet());
+        boolean allElementsPresent = new HashSet<>(groupParticipants).containsAll(mergedUniqueList);
+        if (!allElementsPresent) {
+            //:TODO
+            return;
+        }
+        else {
+
+            for (Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
+
+                Optional<Friendship> friendshipOp = friendshipRepository.getFriendshipBySelfAndFriend(entry.getKey().getFirst(), entry.getKey().getSecond());
+                if(!friendshipOp.isPresent()){
+                    friendshipRepository.save(Friendship.builder()
+                            .self(entry.getKey().getFirst())
+                            .friend(entry.getKey().getSecond())
+                            .amount(mapAmountToString(entry.getValue(),currency)).build());
+                    return;
+                }
+
+                Friendship friendship = friendshipOp.get();
+                friendship.setAmount(mapAmountToString(mapStringToAmount(friendship.getAmount()).getValue() + entry.getValue(),currency));
+                friendshipRepository.save(friendship);
+            }
+        }
+
+
+
     }
 
     private void updateFriendship(Currency currency, Map<Pair<Long, Long>, Double> amountSplitMap) {
@@ -129,6 +175,7 @@ public class ExpenseService {
                     .expenseId(expenseID)
                     .fromUserId(entry.getKey().getFirst())
                     .toUserId(entry.getKey().getSecond())
+                    .groupId(insertExpenseDTO.getGroupId())
                     .amount(mapAmountToString(entry.getValue(), insertExpenseDTO.getAmount().getCurrency()))
                     .build();
             spenderRepository.save(spender);
@@ -162,7 +209,10 @@ public class ExpenseService {
                 .date(Timestamp.valueOf(LocalDateTime.now()))
                 .category(insertExpenseDTO.getCategory())
                 .amount(insertExpenseDTO.getAmount())
+                .groupId(insertExpenseDTO.getGroupId())
                 .build()).getId();
     }
+
+//    private Long insertExpenseT
 
 }

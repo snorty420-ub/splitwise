@@ -2,6 +2,7 @@ package com.practice.splitwise.services;
 
 import com.practice.splitwise.data.*;
 import com.practice.splitwise.dtos.requests.CreateGroupDTO;
+import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.exceptions.GroupNotFoundException;
 import com.practice.splitwise.repositories.FriendshipRepository;
 import com.practice.splitwise.repositories.GroupParticipantsRepository;
@@ -113,7 +114,8 @@ public class GroupService {
         return new ArrayList<Expense>();
     }
 
-    public Group addExpenseToGroup(Long groupId, Long expenseId) {
+    public Group addExpenseToGroup(InsertExpenseDTO insertExpenseDTO) {
+
 
 //        Expense expense = expenseService.getExpenseById(expenseId);
 //        Group group = getGroupById(groupId);
