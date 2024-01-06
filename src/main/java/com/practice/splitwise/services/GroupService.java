@@ -8,6 +8,9 @@ import com.practice.splitwise.repositories.FriendshipRepository;
 import com.practice.splitwise.repositories.GroupParticipantsRepository;
 import com.practice.splitwise.repositories.GroupRepository;
 import com.practice.splitwise.utilities.Utilities;
+//import com.sun.tools.javac.util.Pair;
+//import javafx.util.Pair;
+
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -54,15 +57,23 @@ public class GroupService {
     }
 
     private void addNonExistentFriendship(List<Long> groupParticipants) {
-        IntStream.range(0, groupParticipants.size() - 1)
-                .mapToObj(i -> new AbstractMap.SimpleEntry<>(groupParticipants.get(i), groupParticipants.get(i + 1)))
-                .forEach(this::checkNAddFriendship);
+        for(int i=0;i<groupParticipants.size()-1;i++){
+            for(int j=i+1;j<groupParticipants.size();j++){
+//                Pair<Long,Long> p = new Pair<>();
+                checkNAddFriendship(groupParticipants.get(i),groupParticipants.get(j));
+            }
+
+        }
+//        IntStream.range(0, groupParticipants.size() - 1)
+//                .mapToObj(i -> new AbstractMap.SimpleEntry<>(groupParticipants.get(i), groupParticipants.get(i + 1)))
+//                .forEach(this::checkNAddFriendship);
     }
 
-    private void checkNAddFriendship(AbstractMap.SimpleEntry<Long, Long> pair) {
-        Optional<Friendship> friendshipBySelfAndFriendOp = friendshipRepository.getFriendshipBySelfAndFriend(pair.getKey(), pair.getValue());
+    private void checkNAddFriendship(Long participant1, Long participant2) {
+        //:TODO
+        Optional<Friendship> friendshipBySelfAndFriendOp = friendshipRepository.getFriendshipBySelfAndFriend(participant1, participant2);
         if (!friendshipBySelfAndFriendOp.isPresent()) {
-            friendshipRepository.save(Friendship.builder().self(pair.getKey()).friend(pair.getValue())
+            friendshipRepository.save(Friendship.builder().self(participant1).friend(participant2)
                     .amount(mapAmountToString(0, Currency.getInstance("INR"))).build());
         }
     }

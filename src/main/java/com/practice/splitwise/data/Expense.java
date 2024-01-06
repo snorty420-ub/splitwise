@@ -27,7 +27,7 @@ public class Expense implements Serializable {
 	private Long addedBy;
 	private Timestamp date;
 	private Category category;
-	private Amount amount;
+	private String amount;
 
 
 

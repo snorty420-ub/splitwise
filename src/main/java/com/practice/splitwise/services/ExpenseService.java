@@ -112,48 +112,67 @@ public class ExpenseService {
         createSpenderAndBeneficiary(insertExpenseDTO, expenseID, amountSplitMap);
         // update friendship
         if(Objects.nonNull(insertExpenseDTO.getGroupId())){
-            updateFriendshipForGroup(insertExpenseDTO,amountSplitMap);
+            updateFriendshipAndGroupParticipantsForGroup(insertExpenseDTO,amountSplitMap);
         }
         else updateFriendship(insertExpenseDTO.getAmount().getCurrency(), amountSplitMap);
         return expenseID;
     }
 
-    private void updateFriendshipForGroup(InsertExpenseDTO insertExpenseDTO, Map<Pair<Long, Long>, Double> amountSplitMap) {
+    private void updateFriendshipAndGroupParticipantsForGroup(InsertExpenseDTO insertExpenseDTO, Map<Pair<Long, Long>, Double> amountSplitMap) {
         Currency currency = insertExpenseDTO.getAmount().getCurrency();
-        Optional<List<Long>> groupParticipantsOp = groupParticipantsRepository.findByGroupId(insertExpenseDTO.getGroupId());
+        Optional<List<GroupParticipants>> groupParticipantsOp = groupParticipantsRepository.findByGroupId(insertExpenseDTO.getGroupId());
         if(!groupParticipantsOp.isPresent()){
             //:TODO
             return;
         }
-        List<Long> groupParticipants = groupParticipantsOp.get();
+        List<GroupParticipants> groupParticipants = groupParticipantsOp.get();
+        List<Long> groupParticipantsId = groupParticipants.stream().map(GroupParticipants::getParticipant).collect(Collectors.toList());
         Set<Long> mergedUniqueList = Stream.concat(insertExpenseDTO.getSpenderList().stream(), insertExpenseDTO.getBeneficiaryList().stream())
                 .collect(Collectors.toSet());
-        boolean allElementsPresent = new HashSet<>(groupParticipants).containsAll(mergedUniqueList);
+        boolean allElementsPresent = new HashSet<>(groupParticipantsId).containsAll(mergedUniqueList);
         if (!allElementsPresent) {
             //:TODO
             return;
         }
         else {
+            Map<Long, Double> amountDeltaPerPerson = new HashMap<>();
 
             for (Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
+                // spender 1 2 3   bene 2 3 4 5   amount 60
+                // 1-2 5, 1-3 5, 1-4 5, 1-5 5
+                // 2-2 5, 2-3 5, 2-4 5, 2-5 5
+                amountDeltaPerPerson.put(entry.getKey().getFirst(), amountDeltaPerPerson.getOrDefault(entry.getKey().getFirst(),0.0)-entry.getValue());
+                amountDeltaPerPerson.put(entry.getKey().getSecond(), amountDeltaPerPerson.getOrDefault(entry.getKey().getSecond(),0.0)+entry.getValue());
 
-                Optional<Friendship> friendshipOp = friendshipRepository.getFriendshipBySelfAndFriend(entry.getKey().getFirst(), entry.getKey().getSecond());
+                // update friendship
+                Optional<Friendship> friendshipOp = friendshipRepository.getFriendshipBySelfAndFriendAndGroupId(entry.getKey().getFirst(), entry.getKey().getSecond(), insertExpenseDTO.getGroupId());
                 if(!friendshipOp.isPresent()){
                     friendshipRepository.save(Friendship.builder()
                             .self(entry.getKey().getFirst())
                             .friend(entry.getKey().getSecond())
+                                    .groupId(insertExpenseDTO.getGroupId())
                             .amount(mapAmountToString(entry.getValue(),currency)).build());
-                    return;
+                }
+                else{
+                    Friendship friendship = friendshipOp.get();
+                    friendship.setAmount(mapAmountToString(mapStringToAmount(friendship.getAmount()).getValue() + entry.getValue(),currency));
+                    friendshipRepository.save(friendship);
                 }
 
-                Friendship friendship = friendshipOp.get();
-                friendship.setAmount(mapAmountToString(mapStringToAmount(friendship.getAmount()).getValue() + entry.getValue(),currency));
-                friendshipRepository.save(friendship);
             }
+
+            // update participants
+            groupParticipantsRepository.saveAll(groupParticipants.stream().map(groupParticipants1 -> updateAmountInGroupParticipants(groupParticipants1, amountDeltaPerPerson, currency)).collect(Collectors.toList()));
+
         }
+    }
 
-
-
+    private GroupParticipants updateAmountInGroupParticipants(GroupParticipants groupParticipants, Map<Long, Double> amountDeltaPerPerson, Currency currency) {
+        if(amountDeltaPerPerson.containsKey(groupParticipants.getParticipant())){
+//            groupParticipants.setAmount();
+            groupParticipants.setAmount(mapAmountToString(mapStringToAmount(groupParticipants.getAmount()).getValue() + amountDeltaPerPerson.get(groupParticipants.getParticipant()),currency));
+        }
+        return groupParticipants;
     }
 
     private void updateFriendship(Currency currency, Map<Pair<Long, Long>, Double> amountSplitMap) {
@@ -208,7 +227,7 @@ public class ExpenseService {
                 .addedBy(insertExpenseDTO.getAddedByPersonId())
                 .date(Timestamp.valueOf(LocalDateTime.now()))
                 .category(insertExpenseDTO.getCategory())
-                .amount(insertExpenseDTO.getAmount())
+                .amount(mapAmountToString(insertExpenseDTO.getAmount().getValue(), insertExpenseDTO.getAmount().getCurrency()))
                 .groupId(insertExpenseDTO.getGroupId())
                 .build()).getId();
     }

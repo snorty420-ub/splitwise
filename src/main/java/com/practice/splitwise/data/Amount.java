@@ -10,5 +10,4 @@ import lombok.Data;
 public class Amount implements Serializable {
 	private double value;
 	private Currency currency;
-
 }
