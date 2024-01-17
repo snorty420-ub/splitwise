@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -25,39 +26,9 @@ public class Expense implements Serializable {
 	private Long id;
 	private Long groupId;
 	private Long addedBy;
+	private String name;
 	private Timestamp date;
 	private Category category;
 	private String amount;
 
-
-
-
-//	@OneToMany(targetEntity=Expense.class)
-//	private List<Expense> subExpenseList;
-//
-//	@OneToMany(targetEntity=Receipt.class)
-//	private List<Receipt> receiptList;
-//
-//	@OneToMany(targetEntity=Spender.class)
-//	private List<Spender> spenderList;
-//
-//	@OneToMany(targetEntity=Spender.class)
-//	private List<Spender> beneficiaryList;
-//	private void updateMembers() {
-//		if(isUpdated){
-//			return;
-//		}
-//		isUpdated = true;
-//		for (Expense expense : subExpenseList) {
-//			amount.add(expense.getAmount());
-//			spenderList.addAll(expense.getSpenderList());
-//			beneficiaryList.addAll(expense.getBeneficiaryList());
-//		}
-//		spenderList = removeDuplicates(spenderList);
-//		removeDuplicates(beneficiaryList);
-//	}
-
-//	private <T> List<T> removeDuplicates(List<T> list) {
-//		return list.stream().distinct().collect(Collectors.toList());
-//	}
 }

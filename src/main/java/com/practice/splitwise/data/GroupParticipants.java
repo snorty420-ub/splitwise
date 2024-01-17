@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+/**
+ * info of a person's debt/credit status
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

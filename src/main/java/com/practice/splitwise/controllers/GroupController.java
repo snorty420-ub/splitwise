@@ -28,7 +28,6 @@ public class GroupController {
 
     @PostMapping
     public Long createGroup(@RequestBody CreateGroupDTO createGroupDTO){
-
         return groupService.createGroup(createGroupDTO);
     }
 

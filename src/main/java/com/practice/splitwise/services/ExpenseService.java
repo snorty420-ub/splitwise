@@ -1,12 +1,11 @@
 package com.practice.splitwise.services;
 
 import com.practice.splitwise.data.*;
+import com.practice.splitwise.dtos.requests.BaseInsertExpenseDTO;
+import com.practice.splitwise.dtos.requests.InsertBillExpenseDTO;
 import com.practice.splitwise.dtos.requests.InsertExpenseDTO;
 import com.practice.splitwise.exceptions.ExpenseNotFoundException;
-import com.practice.splitwise.repositories.ExpenseRepository;
-import com.practice.splitwise.repositories.FriendshipRepository;
-import com.practice.splitwise.repositories.GroupParticipantsRepository;
-import com.practice.splitwise.repositories.SpenderRepository;
+import com.practice.splitwise.repositories.*;
 import com.practice.splitwise.utilities.Utilities;
 
 import java.util.*;
@@ -28,17 +27,17 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final PersonService personService;
     private final GroupParticipantsRepository groupParticipantsRepository;
-//    private final GroupService groupService;
     private final SpenderRepository spenderRepository;
+    private final SubExpenseRepository subExpenseRepository;
     private final FriendshipRepository friendshipRepository;
 
     public ExpenseService(ExpenseRepository expenseRepository, PersonService personService,
-                          GroupParticipantsRepository groupParticipantsRepository, SpenderRepository spenderRepository, FriendshipRepository friendshipRepository){
+                          GroupParticipantsRepository groupParticipantsRepository, SpenderRepository spenderRepository, SubExpenseRepository subExpenseRepository, FriendshipRepository friendshipRepository){
         this.expenseRepository = expenseRepository;
         this.personService = personService;
         this.groupParticipantsRepository = groupParticipantsRepository;
-//        this.groupService = groupService;
         this.spenderRepository = spenderRepository;
+        this.subExpenseRepository = subExpenseRepository;
         this.friendshipRepository = friendshipRepository;
     }
 
@@ -109,7 +108,7 @@ public class ExpenseService {
         // calculation of splits
         Map<Pair<Long,Long>,Double> amountSplitMap = calculateShares(insertExpenseDTO);
         // create and save spender and beneficiary
-        createSpenderAndBeneficiary(insertExpenseDTO, expenseID, amountSplitMap);
+        createSpender(insertExpenseDTO, expenseID, amountSplitMap, null);
         // update friendship
         if(Objects.nonNull(insertExpenseDTO.getGroupId())){
             updateFriendshipAndGroupParticipantsForGroup(insertExpenseDTO,amountSplitMap);
@@ -120,21 +119,27 @@ public class ExpenseService {
 
     private void updateFriendshipAndGroupParticipantsForGroup(InsertExpenseDTO insertExpenseDTO, Map<Pair<Long, Long>, Double> amountSplitMap) {
         Currency currency = insertExpenseDTO.getAmount().getCurrency();
+        // participants nikaal liye
         Optional<List<GroupParticipants>> groupParticipantsOp = groupParticipantsRepository.findByGroupId(insertExpenseDTO.getGroupId());
         if(!groupParticipantsOp.isPresent()){
             //:TODO
             return;
         }
+        // nikal ge
         List<GroupParticipants> groupParticipants = groupParticipantsOp.get();
+        // id nikal li
         List<Long> groupParticipantsId = groupParticipants.stream().map(GroupParticipants::getParticipant).collect(Collectors.toList());
+        // spender aur bene ko merge krke unique ids nikal li
         Set<Long> mergedUniqueList = Stream.concat(insertExpenseDTO.getSpenderList().stream(), insertExpenseDTO.getBeneficiaryList().stream())
                 .collect(Collectors.toSet());
+        // check kr bhai ki sb log merged list mei grp k launde hee hai na
         boolean allElementsPresent = new HashSet<>(groupParticipantsId).containsAll(mergedUniqueList);
         if (!allElementsPresent) {
             //:TODO
             return;
         }
         else {
+
             Map<Long, Double> amountDeltaPerPerson = new HashMap<>();
 
             for (Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
@@ -150,7 +155,7 @@ public class ExpenseService {
                     friendshipRepository.save(Friendship.builder()
                             .self(entry.getKey().getFirst())
                             .friend(entry.getKey().getSecond())
-                                    .groupId(insertExpenseDTO.getGroupId())
+                            .groupId(insertExpenseDTO.getGroupId())
                             .amount(mapAmountToString(entry.getValue(),currency)).build());
                 }
                 else{
@@ -188,7 +193,7 @@ public class ExpenseService {
         }
     }
 
-    private void createSpenderAndBeneficiary(InsertExpenseDTO insertExpenseDTO, Long expenseID, Map<Pair<Long, Long>, Double> amountSplitMap) {
+    private void createSpender(BaseInsertExpenseDTO insertExpenseDTO, Long expenseID, Map<Pair<Long, Long>, Double> amountSplitMap, Long subExpenseId) {
         for(Map.Entry<Pair<Long,Long>,Double> entry: amountSplitMap.entrySet()){
             Spender spender = Spender.builder()
                     .expenseId(expenseID)
@@ -196,6 +201,7 @@ public class ExpenseService {
                     .toUserId(entry.getKey().getSecond())
                     .groupId(insertExpenseDTO.getGroupId())
                     .amount(mapAmountToString(entry.getValue(), insertExpenseDTO.getAmount().getCurrency()))
+                    .subExpenseId(subExpenseId)
                     .build();
             spenderRepository.save(spender);
         }
@@ -222,14 +228,89 @@ public class ExpenseService {
         return amountSplitMap;
     }
 
-    private Long createExpense(InsertExpenseDTO insertExpenseDTO) {
+    private Long createExpense(BaseInsertExpenseDTO insertExpenseDTO) {
         return expenseRepository.save(Expense.builder()
                 .addedBy(insertExpenseDTO.getAddedByPersonId())
                 .date(Timestamp.valueOf(LocalDateTime.now()))
+                .name(insertExpenseDTO.getName())
                 .category(insertExpenseDTO.getCategory())
                 .amount(mapAmountToString(insertExpenseDTO.getAmount().getValue(), insertExpenseDTO.getAmount().getCurrency()))
                 .groupId(insertExpenseDTO.getGroupId())
                 .build()).getId();
+    }
+
+    public Long insertBillExpense(InsertBillExpenseDTO insertBillExpenseDTO) {
+        //TODO(bhai grp he ya ni ye toh dekhle pehle)
+        if(Objects.isNull(insertBillExpenseDTO.getGroupId())){
+            //TODO
+            throw new RuntimeException("No group found");
+        }
+
+        try{
+            if(insertBillExpenseDTO.getAmount().getValue() != insertBillExpenseDTO.getBillExpenses().stream().mapToDouble(billExpense -> billExpense.getSubExpenseDTO().getAmount().getValue()).sum()){
+                //TODO
+                throw new RuntimeException("abey maths padh");
+            }
+        }
+        catch (NullPointerException e){
+            throw new RuntimeException("amount toh de bhai");
+        }
+
+        Long expenseID = createExpense(insertBillExpenseDTO);
+        // calculation of splits
+        Map<Pair<Long,Pair<Long,Long>>,Double> billAmountSplitMap = new HashMap<>();
+        for(InsertBillExpenseDTO.BillExpenseDTO billExpenseDTO : insertBillExpenseDTO.getBillExpenses()){
+            Long subExpenseId = createAndSaveBillExpense(billExpenseDTO, expenseID, insertBillExpenseDTO);
+            InsertExpenseDTO insertExpenseDTO = InsertExpenseDTO.builder().beneficiaryList(billExpenseDTO.getBeneficiaryList()).build();
+            insertExpenseDTO.setAmount(billExpenseDTO.getSubExpenseDTO().getAmount());
+            insertExpenseDTO.setSpenderList(insertBillExpenseDTO.getSpenderList());
+            Map<Pair<Long, Long>, Double> shareMapPerItem = calculateShares(insertExpenseDTO);
+            for(Map.Entry<Pair<Long, Long>, Double> entry:shareMapPerItem.entrySet()){
+                Pair<Long,Pair<Long,Long>> sharePerItem = Pair.of(subExpenseId,Pair.of(entry.getKey().getFirst(),entry.getKey().getSecond()));
+                billAmountSplitMap.put(sharePerItem,entry.getValue());
+            }
+            createSpender(insertBillExpenseDTO, expenseID, shareMapPerItem, subExpenseId);
+
+        }
+        // in order to use the updateFriendshipAndGroupParticipantsForGroup() we used in insert normal expense
+        // we mapped Split map and insertExpenseDTO
+
+        // iterate on all items and create the split map
+        Map<Pair<Long, Long>, Double> simplifiedBillAmountSplitMap = new HashMap<>();
+        simplifyBillAmountSplit(billAmountSplitMap,simplifiedBillAmountSplitMap);
+
+        List<Long> mergedBeneficiaryList = insertBillExpenseDTO.getBillExpenses().stream().flatMap(subExpense -> subExpense.getBeneficiaryList().stream()).distinct().collect(Collectors.toList());
+        InsertExpenseDTO insertExpenseDTO = InsertExpenseDTO.builder().beneficiaryList(mergedBeneficiaryList)
+                .addedByPersonId(insertBillExpenseDTO.getAddedByPersonId())
+                .spenderList(insertBillExpenseDTO.getSpenderList())
+                .name(insertBillExpenseDTO.getName())
+                .groupId(insertBillExpenseDTO.getGroupId())
+                .category(insertBillExpenseDTO.getCategory())
+                .amount(insertBillExpenseDTO.getAmount())
+                .build();
+
+        updateFriendshipAndGroupParticipantsForGroup(insertExpenseDTO,simplifiedBillAmountSplitMap);
+        return expenseID;
+    }
+
+    private void simplifyBillAmountSplit(Map<Pair<Long, Pair<Long, Long>>, Double> billAmountSplitMap, Map<Pair<Long, Long>, Double> simplifiedBillAmountSplitMap) {
+        for (Map.Entry<Pair<Long, Pair<Long, Long>>, Double> entry : billAmountSplitMap.entrySet()) {
+
+            Pair<Long, Long> pair = Pair.of(entry.getKey().getSecond().getFirst(), entry.getKey().getSecond().getSecond());
+            simplifiedBillAmountSplitMap.put(pair, entry.getValue() + simplifiedBillAmountSplitMap.getOrDefault(pair, 0.0));
+        }
+    }
+
+    private Long createAndSaveBillExpense(InsertBillExpenseDTO.BillExpenseDTO billExpenseDTO, Long expenseID, InsertBillExpenseDTO insertBillExpenseDTO) {
+        SubExpense subExpense = SubExpense.builder().name(billExpenseDTO.getSubExpenseDTO().getName())
+                .date(Timestamp.valueOf(LocalDateTime.now()))
+                .category(insertBillExpenseDTO.getCategory())
+                .addedBy(insertBillExpenseDTO.getAddedByPersonId())
+                .expenseId(expenseID)
+                .amount(mapAmountToString(billExpenseDTO.getSubExpenseDTO().getAmount().getValue(),billExpenseDTO.getSubExpenseDTO().getAmount().getCurrency()))
+                .groupId(insertBillExpenseDTO.getGroupId())
+                .build();
+        return subExpenseRepository.save(subExpense).getId();
     }
 
 //    private Long insertExpenseT
